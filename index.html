@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدير الاشتراكات</title>
+    <!-- تحميل Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* استخدام خط Inter كخط أساسي */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* إخفاء أسهم حقول الأرقام */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* تغيير شكل الحقول المعطلة لتكون أوضح */
+        input:disabled {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #6b7280; /* text-gray-500 */
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen">
+
+    <!-- حاوية التطبيق الرئيسية -->
+    <div class="max-w-5xl mx-auto p-4 md:p-8">
+        
+        <!-- العنوان الرئيسي -->
+        <h1 class="text-3xl md:text-4xl font-bold text-center mb-8 text-blue-700">
+            أداة تتبع الاشتراكات
+        </h1>
+
+        <!-- قسم الإجماليات -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <h2 class="text-sm font-medium text-gray-500 mb-2">إجمالي الدفع الشهري</h2>
+                <p class="text-3xl font-bold text-blue-600">
+                    <span id="totalMonthly">0.00</span> ر.س
+                </p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                <h2 class="text-sm font-medium text-gray-500 mb-2">إجمالي الدفع السنوي</h2>
+                <p class="text-3xl font-bold text-gray-700">
+                    <span id="totalYearly">0.00</span> ر.س
+                </p>
+            </div>
+        </div>
+
+        <!-- فورم إضافة اشتراك جديد -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-5 text-gray-800">إضافة اشتراك جديد</h2>
+            <form id="subscriptionForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- اسم البرنامج -->
+                <div class="md:col-span-2">
+                    <label for="programName" class="block text-sm font-medium text-gray-700 mb-1">اسم البرنامج</label>
+                    <input type="text" id="programName" placeholder="مثال: Netflix" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                
+                <!-- السعر الشهري -->
+                <div>
+                    <label for="monthlyPrice" class="block text-sm font-medium text-gray-700 mb-1">السعر الشهري (ر.س)</label>
+                    <input type="number" id="monthlyPrice" placeholder="0.00" min="0" step="0.01" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- السعر السنوي -->
+                <div>
+                    <label for="yearlyPrice" class="block text-sm font-medium text-gray-700 mb-1">السعر السنوي (ر.س)</label>
+                    <input type="number" id="yearlyPrice" placeholder="0.00" min="0" step="0.01" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- نوع الاشتراك -->
+                <div>
+                    <label for="subscriptionType" class="block text-sm font-medium text-gray-700 mb-1">نوع الاشتراك</label>
+                    <select id="subscriptionType" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="web">Web</option>
+                        <option value="apple">Apple Store</option>
+                        <option value="google">Google Play</option>
+                        <option value="huawei">HUAWEI</option>
+                        <option value="فاتورة">فاتورة</option>
+                    </select>
+                </div>
+
+                <!-- طريقة الدفع -->
+                <div class="md:col-span-2">
+                    <label for="paymentMethod" class="block text-sm font-medium text-gray-700 mb-1">طريقة الدفع</label>
+                    <input type="text" id="paymentMethod" placeholder="مثال: فيزا 4242" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- زر الإضافة -->
+                <div class="md:col-span-5">
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+                        إضافة الاشتراك
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- جدول الاشتراكات -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-max table-auto">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-4 text-right text-sm font-semibold text-gray-600">اسم البرنامج</th>
+                            <th class="p-4 text-right text-sm font-semibold text-gray-600">السعر الشهري</th>
+                            <th class="p-4 text-right text-sm font-semibold text-gray-600">السعر السنوي</th>
+                            <th class="p-4 text-right text-sm font-semibold text-gray-600">نوع الاشتراك</th>
+                            <th class="p-4 text-right text-sm font-semibold text-gray-600">طريقة الدفع</th>
+                            <th class="p-4 text-center text-sm font-semibold text-gray-600">حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subscriptionTableBody" class="divide-y divide-gray-200">
+                        <!-- البيانات ستضاف هنا عبر جافاسكربت -->
+                        <tr>
+                            <td colspan="6" class="p-6 text-center text-gray-500" id="loadingMessage">
+                                جاري تحميل البيانات...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- User ID Display -->
+        <div class="mt-8 text-center text-gray-500 text-xs">
+            <p>معرف المستخدم الخاص بك (لمشاركة البيانات إذا أردت):</p>
+            <p id="userIdDisplay" class="font-mono select-all">...</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // استيراد وظائف Firebase اللازمة
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            addDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // إعدادات Firebase
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let app, auth, db;
+        let userId = null;
+        let isAuthReady = false;
+        let subscriptionsCollectionRef;
+
+        // تفعيل تسجيل الأخطاء للمساعدة في التصحيح
+        setLogLevel('Debug');
+
+        // جلب عناصر الواجهة الرسومية
+        const subscriptionForm = document.getElementById('subscriptionForm');
+        const programNameInput = document.getElementById('programName');
+        const monthlyPriceInput = document.getElementById('monthlyPrice');
+        const yearlyPriceInput = document.getElementById('yearlyPrice');
+        const subscriptionTypeInput = document.getElementById('subscriptionType');
+        const paymentMethodInput = document.getElementById('paymentMethod');
+        const subscriptionTableBody = document.getElementById('subscriptionTableBody');
+        const totalMonthlyEl = document.getElementById('totalMonthly');
+        const totalYearlyEl = document.getElementById('totalYearly');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        // --- إضافة الأحداث لحساب السعر ---
+        monthlyPriceInput.addEventListener('input', () => {
+            try {
+                const monthly = parseFloat(monthlyPriceInput.value);
+                if (monthly > 0) {
+                    yearlyPriceInput.value = (monthly * 12).toFixed(2);
+                    yearlyPriceInput.disabled = true;
+                } else {
+                    yearlyPriceInput.value = ''; // مسح القيمة
+                    yearlyPriceInput.disabled = false;
+                }
+            } catch (e) {
+                console.warn("Invalid monthly input");
+                yearlyPriceInput.value = '';
+                yearlyPriceInput.disabled = false;
+            }
+        });
+
+        yearlyPriceInput.addEventListener('input', () => {
+             try {
+                const yearly = parseFloat(yearlyPriceInput.value);
+                if (yearly > 0) {
+                    monthlyPriceInput.value = ''; // مسح القيمة
+                    monthlyPriceInput.disabled = true;
+                } else {
+                    monthlyPriceInput.disabled = false;
+                }
+             } catch (e) {
+                 console.warn("Invalid yearly input");
+                 monthlyPriceInput.value = '';
+                 monthlyPriceInput.disabled = false;
+             }
+        });
+        // --- نهاية إضافة الأحداث ---
+
+
+        // دالة لتهيئة Firebase وتسجيل الدخول
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // مراقبة تغييرات حالة المصادقة
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        console.log("User is authenticated:", user.uid);
+                        userId = user.uid;
+                        userIdDisplay.textContent = userId;
+                        // المسار الخاص ببيانات المستخدم
+                        const collectionPath = `artifacts/${appId}/users/${userId}/subscriptions`;
+                        subscriptionsCollectionRef = collection(db, collectionPath);
+                        console.log("Using collection path:", collectionPath);
+                        isAuthReady = true;
+                        setupSnapshotListener();
+                    } else {
+                        console.log("User is not authenticated. Attempting sign-in.");
+                        userId = null;
+                        isAuthReady = false;
+                        await attemptSignIn();
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                loadingMessage.textContent = "خطأ في تهيئة قاعدة البيانات.";
+            }
+        }
+
+        // محاولة تسجيل الدخول
+        async function attemptSignIn() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    console.log("Signing in with custom token...");
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    console.log("Signing in anonymously...");
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Error signing in:", error);
+                loadingMessage.textContent = "خطأ في تسجيل الدخول.";
+            }
+        }
+
+        // إعداد مراقب البيانات (Snapshot Listener)
+        function setupSnapshotListener() {
+            if (!isAuthReady || !subscriptionsCollectionRef) {
+                console.warn("Auth not ready or collection ref not set.");
+                return;
+            }
+
+            console.log("Setting up snapshot listener...");
+            const q = query(subscriptionsCollectionRef);
+            
+            onSnapshot(q, (querySnapshot) => {
+                console.log("Received snapshot update");
+                const subscriptions = [];
+                querySnapshot.forEach((doc) => {
+                    subscriptions.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // تحديث الواجهة
+                renderTable(subscriptions);
+                updateTotals(subscriptions);
+
+                // إخفاء رسالة التحميل
+                if (loadingMessage) {
+                    loadingMessage.closest('tr').style.display = 'none';
+                }
+                if (subscriptions.length === 0) {
+                     subscriptionTableBody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">لا توجد اشتراكات مضافة حتى الآن.</td></tr>';
+                }
+
+            }, (error) => {
+                console.error("Error with snapshot listener:", error);
+                loadingMessage.textContent = "خطأ في جلب البيانات.";
+            });
+        }
+
+        // دالة لعرض البيانات في الجدول
+        function renderTable(subscriptions) {
+            subscriptionTableBody.innerHTML = ''; // مسح الجدول أولاً
+            if (subscriptions.length === 0) {
+                subscriptionTableBody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">لا توجد اشتراكات مضافة حتى الآن.</td></tr>';
+                return;
+            }
+
+            subscriptions.forEach((sub) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors';
+                row.innerHTML = `
+                    <td class="p-4 font-medium">${escapeHTML(sub.name || 'N/A')}</td>
+                    <td class="p-4">${parseFloat(sub.monthly || 0).toFixed(2)} ر.س</td>
+                    <td class="p-4">${parseFloat(sub.yearly || 0).toFixed(2)} ر.س</td>
+                    <td class="p-4">${escapeHTML(sub.type || 'N/A')}</td>
+                    <td class="p-4">${escapeHTML(sub.payment || 'N/A')}</td>
+                    <td class="p-4 text-center">
+                        <button class="delete-btn bg-red-500 text-white text-xs py-1 px-3 rounded-full hover:bg-red-600 transition-colors" data-id="${sub.id}">
+                            حذف
+                        </button>
+                    </td>
+                `;
+                subscriptionTableBody.appendChild(row);
+            });
+        }
+
+        // دالة لتحديث الإجماليات
+        function updateTotals(subscriptions) {
+            // حساب الإجمالي الشهري: يجمع كل "monthly" ويضيف "yearly" مقسومًا على 12
+            const totalMonthly = subscriptions.reduce((sum, sub) => {
+                const monthly = parseFloat(sub.monthly || 0);
+                const yearly = parseFloat(sub.yearly || 0);
+                // إذا كان الاشتراك شهريًا، أضفه
+                if (monthly > 0) {
+                    return sum + monthly;
+                }
+                // إذا كان سنويًا فقط، أضف قيمته الشهرية
+                if (yearly > 0 && monthly === 0) {
+                    return sum + (yearly / 12);
+                }
+                return sum;
+            }, 0);
+
+            // حساب الإجمالي السنوي: يجمع كل "yearly" ويضيف "monthly" مضروبًا في 12
+             const totalYearly = subscriptions.reduce((sum, sub) => {
+                const monthly = parseFloat(sub.monthly || 0);
+                const yearly = parseFloat(sub.yearly || 0);
+                // إذا كان الاشتراك سنويًا، أضفه
+                if (yearly > 0) {
+                    return sum + yearly;
+                }
+                 // إذا كان شهريًا فقط، أضف قيمته السنوية
+                if (monthly > 0 && yearly === 0) {
+                    return sum + (monthly * 12);
+                }
+                return sum;
+            }, 0);
+
+            totalMonthlyEl.textContent = totalMonthly.toFixed(2);
+            totalYearlyEl.textContent = totalYearly.toFixed(2);
+        }
+
+        // دالة لإضافة اشتراك
+        async function addSubscription(event) {
+            event.preventDefault();
+            if (!isAuthReady) {
+                console.error("Cannot add subscription, auth not ready.");
+                // يمكنك إظهار رسالة للمستخدم هنا
+                return;
+            }
+
+            const name = programNameInput.value;
+            const monthly = parseFloat(monthlyPriceInput.value) || 0;
+            const yearly = parseFloat(yearlyPriceInput.value) || 0;
+            const type = subscriptionTypeInput.value;
+            const payment = paymentMethodInput.value;
+
+            if (!name) {
+                 console.error("Program name is required.");
+                // أظهر رسالة خطأ للمستخدم
+                return;
+            }
+            
+            if (monthly === 0 && yearly === 0) {
+                 console.error("Monthly or yearly price is required.");
+                 // أظهر رسالة خطأ للمستخدم
+                 return;
+            }
+
+            try {
+                console.log("Adding document...");
+                await addDoc(subscriptionsCollectionRef, {
+                    name: name,
+                    monthly: monthly,
+                    yearly: yearly, // القيمة مأخوذة مباشرة من الحقل (سواء تم حسابها أو إدخالها)
+                    payment: payment,
+                    type: type
+                });
+                console.log("Document added");
+                // مسح الحقول بعد الإضافة
+                subscriptionForm.reset();
+                
+                // --- إعادة تفعيل الحقول ---
+                monthlyPriceInput.disabled = false;
+                yearlyPriceInput.disabled = false;
+
+            } catch (error) {
+                console.error("Error adding document: ", error);
+            }
+        }
+
+        // دالة لحذف اشتراك
+        async function deleteSubscription(docId) {
+            if (!isAuthReady) {
+                console.error("Cannot delete subscription, auth not ready.");
+                return;
+            }
+            // لا نستخدم confirm() لأنها قد لا تعمل في iframe
+            try {
+                console.log("Deleting document:", docId);
+                await deleteDoc(doc(subscriptionsCollectionRef, docId));
+                console.log("Document deleted");
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+            }
+        }
+        
+        // دالة للتعامل مع النقر على زر الحذف (Event Delegation)
+        subscriptionTableBody.addEventListener('click', (event) => {
+            if (event.target.classList.contains('delete-btn')) {
+                const docId = event.target.dataset.id;
+                // الحذف مباشرة عند الضغط
+                deleteSubscription(docId);
+            }
+        });
+
+        // ربط دالة الإضافة بالنموذج
+        subscriptionForm.addEventListener('submit', addSubscription);
+
+        // دالة لتجنب هجمات XSS
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/[&<>"']/g, function(match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[match];
+            });
+        }
+
+        // بدء تشغيل التطبيق
+        initializeFirebase();
+
+    </script>
+</body>
+</html>
+
+
